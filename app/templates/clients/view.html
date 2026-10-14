@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}{{ client.company_name }} — ComplyAI{% endblock %}
+{% block page_title %}Client Details{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1>{{ client.company_name }}</h1>
+        <p>Client profile and tax information</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        {% if user.role in ['admin', 'manager'] %}
+        <a href="{{ url_for('client.edit_client', client_id=client.id) }}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-2"></i>Edit Client
+        </a>
+        {% endif %}
+        <a href="{{ url_for('client.list_clients') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Details -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-building me-2 text-primary"></i>Company Information</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Company Name</div>
+                        <div style="font-weight:600;">{{ client.company_name }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Business Type</div>
+                        <div>{{ client.business_type or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>Tax Information</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">PAN</div>
+                        <code style="background:#f1f5f9;padding:4px 10px;border-radius:6px;font-size:14px;">{{ client.pan }}</code>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">GSTIN</div>
+                        {% if client.gstin %}
+                        <code style="background:#f1f5f9;padding:4px 10px;border-radius:6px;font-size:14px;">{{ client.gstin }}</code>
+                        {% else %}<span style="color:#94a3b8;">Not provided</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-envelope me-2 text-info"></i>Contact Information</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Email</div>
+                        <a href="mailto:{{ client.email }}" style="color:#1a56db;">{{ client.email }}</a>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Phone</div>
+                        {% if client.phone %}<a href="tel:{{ client.phone }}" style="color:#1a56db;">{{ client.phone }}</a>
+                        {% else %}<span style="color:#94a3b8;">Not provided</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-geo-alt me-2 text-success"></i>Address</div>
+            <div class="card-body">
+                {% if client.address or client.city or client.state %}
+                <p style="font-size:14px;line-height:1.7;margin:0;">
+                    {% if client.address %}{{ client.address }}<br>{% endif %}
+                    {% if client.city %}{{ client.city }}{% endif %}{% if client.state %}, {{ client.state }}{% endif %}{% if client.pincode %} — {{ client.pincode }}{% endif %}
+                </p>
+                {% else %}
+                <span style="color:#94a3b8;">No address provided</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Sidebar -->
+    <div class="col-md-4">
+        <!-- Status -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-activity me-2"></i>Status</div>
+            <div class="card-body">
+                <div style="margin-bottom:16px;">
+                    {% if client.status == 'active' %}<span class="badge badge-status-active" style="font-size:13px;padding:6px 14px;">Active</span>
+                    {% elif client.status == 'inactive' %}<span class="badge badge-status-pending" style="font-size:13px;padding:6px 14px;">Inactive</span>
+                    {% else %}<span class="badge badge-status-overdue" style="font-size:13px;padding:6px 14px;">Suspended</span>{% endif %}
+                </div>
+                {% if user.role in ['admin', 'manager'] %}
+                <form method="POST" action="{{ url_for('client.change_status', client_id=client.id) }}">
+                    <div style="display:flex;gap:8px;">
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="active" {% if client.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if client.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="suspended" {% if client.status == 'suspended' %}selected{% endif %}>Suspended</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Assignment -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person-check me-2"></i>Assigned To</div>
+            <div class="card-body">
+                {% if client.assigned_to_name %}
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="user-avatar" style="width:32px;height:32px;font-size:13px;background:#e0e7ff;color:#3730a3;">{{ client.assigned_to_name[0]|upper }}</div>
+                    <span style="font-size:14px;font-weight:500;">{{ client.assigned_to_name }}</span>
+                </div>
+                {% else %}<span style="color:#94a3b8;">Unassigned</span>{% endif %}
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-clock-history me-2"></i>Record Info</div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+                <div>
+                    <div style="font-size:12px;color:#94a3b8;">Created By</div>
+                    <div style="font-size:13.5px;font-weight:500;">{{ client.created_by_name }}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:#94a3b8;">Created On</div>
+                    <div style="font-size:13.5px;">{{ client.created_at }}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:#94a3b8;">Last Updated</div>
+                    <div style="font-size:13.5px;">{{ client.updated_at }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.role == 'admin' %}
+        <div class="card" style="border-color:#fecaca;">
+            <div class="card-header" style="background:#fef2f2;border-bottom-color:#fecaca;color:#991b1b;">
+                <i class="bi bi-exclamation-triangle me-2"></i>Danger Zone
+            </div>
+            <div class="card-body">
+                <p style="font-size:12.5px;color:#94a3b8;margin-bottom:12px;">Permanently delete this client and all associated data. This cannot be undone.</p>
+                <form method="POST" action="{{ url_for('client.delete_client_route', client_id=client.id) }}"
+                      onsubmit="return confirm('Delete {{ client.company_name }}? This cannot be undone.');">
+                    <button type="submit" class="btn btn-sm btn-danger w-100">
+                        <i class="bi bi-trash me-2"></i>Delete Client
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

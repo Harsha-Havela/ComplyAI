@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Edit Compliance — ComplyAI{% endblock %}
+{% block page_title %}Edit Compliance Deadline{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h1>Edit Compliance Deadline</h1><p>{{ compliance.compliance_type }}</p></div>
+    <a href="{{ url_for('compliance.view_compliance', compliance_id=compliance.id) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('compliance.edit_compliance', compliance_id=compliance.id) }}">
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-info-circle me-2 text-primary"></i>Compliance Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="compliance_type">Compliance Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="compliance_type" name="compliance_type" required>
+                            {% for type in compliance_types %}
+                            <option value="{{ type.value }}" {% if compliance.compliance_type == type.value %}selected{% endif %}>{{ type.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="frequency">Frequency <span class="text-danger">*</span></label>
+                        <select class="form-select" id="frequency" name="frequency" required>
+                            <option value="one_time" {% if compliance.frequency == 'one_time' %}selected{% endif %}>One-time</option>
+                            <option value="monthly" {% if compliance.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                            <option value="quarterly" {% if compliance.frequency == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                            <option value="yearly" {% if compliance.frequency == 'yearly' %}selected{% endif %}>Yearly</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ compliance.description or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person me-2 text-success"></i>Client Assignment</div>
+            <div class="card-body">
+                <label class="form-label" for="client_id">Client</label>
+                <select class="form-select" id="client_id" name="client_id">
+                    <option value="">General Compliance</option>
+                    {% for client in clients %}
+                    <option value="{{ client.id }}" {% if compliance.client_id == client.id %}selected{% endif %}>{{ client.company_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-calendar me-2 text-warning"></i>Timeline</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="due_date">Due Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="due_date" name="due_date" value="{{ compliance.due_date }}" required>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div style="font-size:12.5px;color:#64748b;">
+                            <strong>Current status:</strong>
+                            {% if compliance.status == 'completed' %}<span class="badge badge-status-completed ms-1">Completed</span>
+                            {% elif compliance.status == 'overdue' %}<span class="badge badge-status-overdue ms-1">Overdue</span>
+                            {% else %}<span class="badge badge-status-pending ms-1">Pending</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <a href="{{ url_for('compliance.view_compliance', compliance_id=compliance.id) }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Changes</button>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card" style="background:#fffbeb;border-color:#fde68a;">
+            <div class="card-body">
+                <h6 style="color:#92400e;margin-bottom:10px;"><i class="bi bi-exclamation-triangle me-2"></i>Edit Notes</h6>
+                <ul style="font-size:13px;color:#78350f;margin:0;padding-left:16px;line-height:1.9;">
+                    <li>Due date change affects this entry only</li>
+                    <li>All changes are logged for audit</li>
+                    <li>Status can be updated from View page</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+{% endblock %}

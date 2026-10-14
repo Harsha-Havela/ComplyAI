@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Tasks — ComplyAI{% endblock %}
+{% block page_title %}Task Management{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1>Task Management</h1>
+        <p>Track and manage all team tasks</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        {% if user.role in ['admin', 'manager'] %}
+        <a href="{{ url_for('task.add_task') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Create Task
+        </a>
+        {% endif %}
+        <a href="{{ url_for('task.my_tasks') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-person-check me-2"></i>My Tasks
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-check2-square"></i></div>
+            <div><div class="stat-number">{{ stats.total }}</div><div class="stat-label">Total</div></div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="stat-card">
+            <div class="stat-icon yellow"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="stat-number">{{ stats.pending }}</div><div class="stat-label">Pending</div></div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="stat-card">
+            <div class="stat-icon indigo"><i class="bi bi-arrow-repeat"></i></div>
+            <div><div class="stat-number">{{ stats.in_progress }}</div><div class="stat-label">In Progress</div></div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div><div class="stat-number">{{ stats.completed }}</div><div class="stat-label">Completed</div></div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div><div class="stat-number">{{ stats.overdue }}</div><div class="stat-label">Overdue</div></div>
+        </div>
+    </div>
+    <div class="col-md-2 col-sm-4 col-6">
+        <a href="{{ url_for('task.overdue_tasks') }}" style="text-decoration:none;">
+            <div class="stat-card" style="border-color:#fecaca;background:#fef2f2;cursor:pointer;">
+                <div class="stat-icon red"><i class="bi bi-calendar-x"></i></div>
+                <div><div class="stat-number" style="font-size:13px;color:#ef4444;">View</div><div class="stat-label">Overdue Tasks</div></div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body" style="padding:16px 20px;">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <form method="GET" action="{{ url_for('task.list_tasks') }}">
+                    <div class="input-group">
+                        <span class="input-group-text" style="background:#f8fafc;border-right:none;"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control" style="border-left:none;" name="search"
+                               placeholder="Search tasks..." value="{{ search_term or '' }}">
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-5">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a href="{{ url_for('task.list_tasks') }}" class="btn btn-sm {% if not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+                    <a href="{{ url_for('task.list_tasks', status='pending') }}" class="btn btn-sm {% if current_status == 'pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Pending</a>
+                    <a href="{{ url_for('task.list_tasks', status='in_progress') }}" class="btn btn-sm {% if current_status == 'in_progress' %}btn-primary{% else %}btn-outline-secondary{% endif %}">In Progress</a>
+                    <a href="{{ url_for('task.list_tasks', status='completed') }}" class="btn btn-sm {% if current_status == 'completed' %}btn-success{% else %}btn-outline-secondary{% endif %}">Completed</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" onchange="filterByPriority(this.value)">
+                    <option value="">All Priorities</option>
+                    <option value="urgent" {% if current_priority == 'urgent' %}selected{% endif %}>🔴 Urgent</option>
+                    <option value="high" {% if current_priority == 'high' %}selected{% endif %}>🟠 High</option>
+                    <option value="medium" {% if current_priority == 'medium' %}selected{% endif %}>🟡 Medium</option>
+                    <option value="low" {% if current_priority == 'low' %}selected{% endif %}>🟢 Low</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-table me-2"></i>Tasks</span>
+        <span style="font-size:12px;color:#64748b;">{{ tasks|length }} task{% if tasks|length != 1 %}s{% endif %}</span>
+    </div>
+    {% if tasks %}
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Client</th>
+                    <th>Assigned To</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ task.title }}</div>
+                        {% if task.description %}
+                        <div style="font-size:12px;color:#94a3b8;margin-top:2px;">{{ task.description[:55] }}{% if task.description|length > 55 %}…{% endif %}</div>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13.5px;">{{ task.client_name or '—' }}</td>
+                    <td style="font-size:13.5px;">
+                        {% if task.assigned_to_name %}
+                        <i class="bi bi-person-circle me-1 text-muted"></i>{{ task.assigned_to_name }}
+                        {% else %}<span style="color:#94a3b8;">Unassigned</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if task.priority == 'urgent' %}<span class="badge" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;">🔴 Urgent</span>
+                        {% elif task.priority == 'high' %}<span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;">🟠 High</span>
+                        {% elif task.priority == 'medium' %}<span class="badge" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;">🟡 Medium</span>
+                        {% else %}<span class="badge" style="background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;">🟢 Low</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if task.status == 'completed' %}<span class="badge badge-status-completed">Completed</span>
+                        {% elif task.status == 'in_progress' %}<span class="badge badge-status-inprogress">In Progress</span>
+                        {% elif task.status == 'cancelled' %}<span class="badge badge-freq-onetime">Cancelled</span>
+                        {% else %}<span class="badge badge-status-pending">Pending</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if task.due_date %}
+                        <div style="font-size:13.5px;">{{ task.due_date }}</div>
+                        {% if task.due_date|is_overdue(task.status) %}
+                        <div style="font-size:11px;color:#ef4444;"><i class="bi bi-exclamation-circle me-1"></i>Overdue</div>
+                        {% endif %}
+                        {% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            <a href="{{ url_for('task.view_task', task_id=task.id) }}" class="action-btn view" title="View"><i class="bi bi-eye"></i></a>
+                            {% if user.role in ['admin', 'manager'] %}
+                            <a href="{{ url_for('task.edit_task', task_id=task.id) }}" class="action-btn edit" title="Edit"><i class="bi bi-pencil"></i></a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-check2-square"></i>
+        <h5>No tasks found</h5>
+        <p>{% if search_term %}No results for "{{ search_term }}"{% else %}Create your first task to get started{% endif %}</p>
+        {% if user.role in ['admin', 'manager'] %}
+        <a href="{{ url_for('task.add_task') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Create Task</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterByPriority(p) {
+    const url = new URL(window.location);
+    p ? url.searchParams.set('priority', p) : url.searchParams.delete('priority');
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

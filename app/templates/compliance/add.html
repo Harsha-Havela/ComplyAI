@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Add Compliance — ComplyAI{% endblock %}
+{% block page_title %}Add Compliance Deadline{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h1>Add Compliance Deadline</h1><p>Create a new compliance tracking entry</p></div>
+    <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('compliance.add_compliance') }}">
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-info-circle me-2 text-primary"></i>Compliance Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="compliance_type">Compliance Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="compliance_type" name="compliance_type" required>
+                            <option value="">Select type...</option>
+                            {% for type in compliance_types %}
+                            <option value="{{ type.value }}">{{ type.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="frequency">Frequency <span class="text-danger">*</span></label>
+                        <select class="form-select" id="frequency" name="frequency" required>
+                            <option value="one_time">One-time</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="form-label" for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" placeholder="Optional details about this compliance requirement..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person me-2 text-success"></i>Client Assignment</div>
+            <div class="card-body">
+                <label class="form-label" for="client_id">Client</label>
+                <select class="form-select" id="client_id" name="client_id">
+                    <option value="">General Compliance (no specific client)</option>
+                    {% for client in clients %}
+                    <option value="{{ client.id }}">{{ client.company_name }}</option>
+                    {% endfor %}
+                </select>
+                <div style="font-size:12px;color:#94a3b8;margin-top:6px;">Leave empty for general compliance not tied to a specific client</div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-calendar me-2 text-warning"></i>Timeline</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="due_date">Due Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="due_date" name="due_date" required>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="alert alert-info mb-0 w-100" style="font-size:12.5px;">
+                            <i class="bi bi-info-circle me-1"></i>
+                            For recurring items, future deadlines will auto-generate from this date.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Create Deadline</button>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card" style="background:#f8fafc;border-color:#e2e8f0;">
+            <div class="card-body">
+                <h6 style="margin-bottom:14px;font-size:13px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;">Common Types</h6>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    {% for label, freq in [('GSTR-1','Monthly'),('GSTR-3B','Monthly'),('TDS Return','Quarterly'),('Advance Tax','Quarterly'),('Income Tax Return','Yearly'),('ROC Filing','Yearly')] %}
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:7px;">
+                        <span style="font-size:13px;font-weight:500;">{{ label }}</span>
+                        <span style="font-size:11px;color:#94a3b8;">{{ freq }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+{% endblock %}

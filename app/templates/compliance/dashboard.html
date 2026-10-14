@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Compliance Dashboard - ComplyAI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2><i class="bi bi-shield-check"></i> Compliance Dashboard</h2>
+                            <p class="mb-0">Monitor and manage all compliance deadlines</p>
+                        </div>
+                        <div>
+                            {% if user.role in ['admin', 'manager'] %}
+                            <a href="{{ url_for('compliance.add_compliance') }}" class="btn btn-light">
+                                <i class="bi bi-plus-circle"></i> Add Compliance
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-primary">
+                <div class="card-body">
+                    <i class="bi bi-shield-check text-primary" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-primary">{{ stats.total }}</h3>
+                    <p class="text-muted mb-0">Total Compliance</p>
+                    <small class="text-muted">All deadlines tracked</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-warning">
+                <div class="card-body">
+                    <i class="bi bi-clock text-warning" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-warning">{{ stats.pending }}</h3>
+                    <p class="text-muted mb-0">Pending</p>
+                    <small class="text-muted">Awaiting completion</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-success">
+                <div class="card-body">
+                    <i class="bi bi-check-circle text-success" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-success">{{ stats.completed }}</h3>
+                    <p class="text-muted mb-0">Completed</p>
+                    <small class="text-muted">Successfully filed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm border-danger">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2.5rem;"></i>
+                    <h3 class="mt-3 text-danger">{{ stats.overdue }}</h3>
+                    <p class="text-muted mb-0">Overdue</p>
+                    <small class="text-muted">Need immediate attention</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Critical Section: Overdue Items -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        Overdue Compliance ({{ overdue|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if overdue %}
+                    <div class="list-group list-group-flush">
+                        {% for item in overdue[:5] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-start border-0 px-0">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold text-danger">{{ item.compliance_type }}</div>
+                                <small class="text-muted">
+                                    {{ item.client_name or 'General' }} | Due: {{ item.due_date }}
+                                </small>
+                            </div>
+                            <a href="{{ url_for('compliance.view_compliance', compliance_id=item.id) }}" 
+                               class="btn btn-sm btn-outline-danger">View</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if overdue|length > 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('compliance.overdue_compliance') }}" class="btn btn-danger">
+                            View All {{ overdue|length }} Overdue Items
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="alert alert-success text-center">
+                        <i class="bi bi-check-circle"></i>
+                        <p class="mb-0">No overdue compliance items!</p>
+                        <small>All deadlines are up to date.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock"></i> 
+                        Upcoming Deadlines ({{ upcoming|length }})
+                    </h5>
+                    <small>Next 7 days</small>
+                </div>
+                <div class="card-body">
+                    {% if upcoming %}
+                    <div class="list-group list-group-flush">
+                        {% for item in upcoming[:5] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-start border-0 px-0">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold text-warning">{{ item.compliance_type }}</div>
+                                <small class="text-muted">
+                                    {{ item.client_name or 'General' }} | Due: {{ item.due_date }}
+                                </small>
+                            </div>
+                            <a href="{{ url_for('compliance.view_compliance', compliance_id=item.id) }}" 
+                               class="btn btn-sm btn-outline-warning">View</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if upcoming|length > 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('compliance.upcoming_compliance') }}" class="btn btn-warning">
+                            View All {{ upcoming|length }} Upcoming Items
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-calendar-check"></i>
+                        <p class="mb-0">No upcoming deadlines in the next 7 days.</p>
+                        <small>You're well ahead of schedule!</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Tools -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <!-- Quick Actions Grid -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if user.role in ['admin', 'manager'] %}
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('compliance.add_compliance') }}" 
+                               class="btn btn-primary w-100 text-start">
+                                <i class="bi bi-plus-circle"></i> Add New Compliance Deadline
+                                <br><small class="text-white-50">Create a new compliance requirement</small>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('compliance.list_compliance') }}" 
+                               class="btn btn-outline-primary w-100 text-start">
+                                <i class="bi bi-list"></i> View All Compliance
+                                <br><small class="text-muted">Browse all compliance deadlines</small>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('compliance.compliance_calendar') }}" 
+                               class="btn btn-outline-info w-100 text-start">
+                                <i class="bi bi-calendar3"></i> Calendar View
+                                <br><small class="text-muted">See deadlines in calendar format</small>
+                            </a>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <a href="{{ url_for('compliance.list_compliance', status='pending') }}" 
+                               class="btn btn-outline-warning w-100 text-start">
+                                <i class="bi bi-hourglass-split"></i> Pending Items Only
+                                <br><small class="text-muted">Focus on incomplete tasks</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Insights -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-graph-up"></i> Compliance Insights</h6>
+                </div>
+                <div class="card-body">
+                    {% set completion_rate = (stats.completed / stats.total * 100) if stats.total > 0 else 0 %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Completion Rate</label>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ completion_rate }}%"
+                                 role="progressbar">
+                                {{ "%.1f"|format(completion_rate) }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if stats.overdue > 0 %}
+                    <div class="alert alert-danger alert-sm">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>{{ stats.overdue }}</strong> overdue items need immediate attention!
+                    </div>
+                    {% endif %}
+                    
+                    {% if upcoming|length > 0 %}
+                    <div class="alert alert-warning alert-sm">
+                        <i class="bi bi-clock"></i>
+                        <strong>{{ upcoming|length }}</strong> deadlines in the next 7 days.
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.overdue == 0 and upcoming|length == 0 %}
+                    <div class="alert alert-success alert-sm">
+                        <i class="bi bi-check-circle"></i>
+                        All compliance items are on track!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity (if needed in future) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-activity"></i> Compliance Management</h5>
+                    <div>
+                        {% if user.role == 'admin' %}
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="generateRecurring()">
+                                <i class="bi bi-arrow-repeat"></i> Generate Recurring
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="markOverdue()">
+                                <i class="bi bi-exclamation-triangle"></i> Mark Overdue
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <h6>By Frequency</h6>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{{ url_for('compliance.list_compliance', compliance_type='GST Return - GSTR3B') }}" 
+                                   class="btn btn-sm btn-outline-info">Monthly</a>
+                                <a href="{{ url_for('compliance.list_compliance', compliance_type='GST Return - GSTR1') }}" 
+                                   class="btn btn-sm btn-outline-warning">Quarterly</a>
+                                <a href="{{ url_for('compliance.list_compliance', compliance_type='Income Tax Return') }}" 
+                                   class="btn btn-sm btn-outline-primary">Yearly</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h6>By Type</h6>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{{ url_for('compliance.list_compliance') }}?search=GST" 
+                                   class="btn btn-sm btn-outline-success">GST</a>
+                                <a href="{{ url_for('compliance.list_compliance') }}?search=Income Tax" 
+                                   class="btn btn-sm btn-outline-info">Income Tax</a>
+                                <a href="{{ url_for('compliance.list_compliance') }}?search=TDS" 
+                                   class="btn btn-sm btn-outline-warning">TDS</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h6>Quick Links</h6>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{{ url_for('compliance.list_compliance') }}" 
+                                   class="btn btn-sm btn-outline-secondary">All Items</a>
+                                <a href="{{ url_for('compliance.list_compliance', status='completed') }}" 
+                                   class="btn btn-sm btn-outline-success">Completed</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh statistics every 5 minutes
+setInterval(function() {
+    // You can add AJAX call here to refresh statistics
+    // For now, we'll just add a visual indicator
+    const indicators = document.querySelectorAll('.card h3');
+    indicators.forEach(indicator => {
+        indicator.style.opacity = '0.7';
+        setTimeout(() => {
+            indicator.style.opacity = '1';
+        }, 200);
+    });
+}, 300000); // 5 minutes
+
+{% if user.role == 'admin' %}
+function generateRecurring() {
+    if (confirm('Generate recurring compliance deadlines? This will create new deadlines based on completed recurring items.')) {
+        fetch('/compliance/api/generate-recurring', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Generated ${data.generated} new compliance deadlines.`);
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error generating recurring deadlines: ' + error.message);
+        });
+    }
+}
+
+function markOverdue() {
+    if (confirm('Mark overdue compliance items? This will update the status of past-due items.')) {
+        fetch('/compliance/api/mark-overdue', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Marked ${data.marked_overdue} items as overdue.`);
+                location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            alert('Error marking overdue items: ' + error.message);
+        });
+    }
+}
+{% endif %}
+</script>
+{% endblock %}

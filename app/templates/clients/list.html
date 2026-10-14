@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Clients — ComplyAI{% endblock %}
+{% block page_title %}Clients{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1>Client Management</h1>
+        <p>Manage your client portfolio and assignments</p>
+    </div>
+    {% if user.role in ['admin', 'manager'] %}
+    <a href="{{ url_for('client.add_client') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Add New Client
+    </a>
+    {% endif %}
+</div>
+
+<!-- Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-briefcase"></i></div>
+            <div><div class="stat-number">{{ stats.total }}</div><div class="stat-label">Total Clients</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div><div class="stat-number">{{ stats.active }}</div><div class="stat-label">Active</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon yellow"><i class="bi bi-pause-circle"></i></div>
+            <div><div class="stat-number">{{ stats.inactive }}</div><div class="stat-label">Inactive</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+            <div><div class="stat-number">{{ stats.suspended }}</div><div class="stat-label">Suspended</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body" style="padding:16px 20px;">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <form method="GET" action="{{ url_for('client.list_clients') }}">
+                    <div class="input-group">
+                        <span class="input-group-text" style="background:#f8fafc;border-right:none;"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control" style="border-left:none;" name="search"
+                               placeholder="Search by name, PAN or GSTIN..." value="{{ search_term or '' }}">
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-7">
+                <div style="display:flex;gap:6px;">
+                    <a href="{{ url_for('client.list_clients') }}"
+                       class="btn btn-sm {% if not current_filter %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+                    <a href="{{ url_for('client.list_clients', status='active') }}"
+                       class="btn btn-sm {% if current_filter == 'active' %}btn-success{% else %}btn-outline-secondary{% endif %}">Active</a>
+                    <a href="{{ url_for('client.list_clients', status='inactive') }}"
+                       class="btn btn-sm {% if current_filter == 'inactive' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Inactive</a>
+                    <a href="{{ url_for('client.list_clients', status='suspended') }}"
+                       class="btn btn-sm {% if current_filter == 'suspended' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Suspended</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-table me-2"></i>Clients</span>
+        <span style="font-size:12px;color:#64748b;">{{ clients|length }} client{% if clients|length != 1 %}s{% endif %}</span>
+    </div>
+    {% if clients %}
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>PAN</th>
+                    <th>GSTIN</th>
+                    <th>Contact</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ client.company_name }}</div>
+                        {% if client.business_type %}<div style="font-size:12px;color:#94a3b8;margin-top:2px;">{{ client.business_type }}</div>{% endif %}
+                    </td>
+                    <td><code style="background:#f1f5f9;padding:2px 7px;border-radius:4px;font-size:12px;">{{ client.pan }}</code></td>
+                    <td style="font-size:13px;color:#64748b;">{{ client.gstin or '—' }}</td>
+                    <td>
+                        <div style="font-size:13px;">{{ client.email }}</div>
+                        {% if client.phone %}<div style="font-size:12px;color:#94a3b8;">{{ client.phone }}</div>{% endif %}
+                    </td>
+                    <td style="font-size:13px;">
+                        {% if client.assigned_to_name %}
+                        <i class="bi bi-person me-1 text-muted"></i>{{ client.assigned_to_name }}
+                        {% else %}<span style="color:#94a3b8;">Unassigned</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if client.status == 'active' %}<span class="badge badge-status-active">Active</span>
+                        {% elif client.status == 'inactive' %}<span class="badge badge-status-pending">Inactive</span>
+                        {% else %}<span class="badge badge-status-overdue">Suspended</span>{% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            <a href="{{ url_for('client.view_client', client_id=client.id) }}" class="action-btn view" title="View"><i class="bi bi-eye"></i></a>
+                            {% if user.role in ['admin', 'manager'] %}
+                            <a href="{{ url_for('client.edit_client', client_id=client.id) }}" class="action-btn edit" title="Edit"><i class="bi bi-pencil"></i></a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-briefcase"></i>
+        <h5>No clients found</h5>
+        <p>{% if search_term %}No results for "{{ search_term }}"{% else %}Add your first client to get started{% endif %}</p>
+        {% if user.role in ['admin', 'manager'] %}
+        <a href="{{ url_for('client.add_client') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Add Client</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

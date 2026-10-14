@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} — ComplyAI{% endblock %}
+{% block page_title %}Task Details{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1>{{ task.title }}</h1>
+        <p>Task details and activity</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        {% if user.role in ['admin', 'manager'] %}
+        <a href="{{ url_for('task.edit_task', task_id=task.id) }}" class="btn btn-outline-primary"><i class="bi bi-pencil me-2"></i>Edit</a>
+        {% endif %}
+        <a href="{{ url_for('task.list_tasks') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Main Info -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-clipboard me-2 text-primary"></i>Task Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Title</div>
+                        <div style="font-size:16px;font-weight:600;">{{ task.title }}</div>
+                    </div>
+                    {% if task.description %}
+                    <div class="col-12">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Description</div>
+                        <div style="font-size:13.5px;line-height:1.7;color:#374151;">{{ task.description }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Client</div>
+                        <div style="font-weight:500;">{{ task.client_name or '—' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Assigned To</div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div class="user-avatar" style="width:28px;height:28px;font-size:12px;">{{ task.assigned_to_name[0]|upper if task.assigned_to_name else '?' }}</div>
+                            <span style="font-weight:500;">{{ task.assigned_to_name or 'Unassigned' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-calendar-check me-2 text-warning"></i>Timeline</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Due Date</div>
+                        {% if task.due_date %}
+                        <div style="font-weight:500;">{{ task.due_date }}</div>
+                        {% if task.due_date|is_overdue(task.status) %}
+                        <div style="font-size:11px;color:#ef4444;margin-top:2px;"><i class="bi bi-exclamation-circle me-1"></i>Overdue</div>
+                        {% endif %}
+                        {% else %}<div style="color:#94a3b8;">Not set</div>{% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Reminder</div>
+                        <div style="font-weight:500;">{{ task.reminder_date or '—' }}</div>
+                    </div>
+                    {% if task.completed_at %}
+                    <div class="col-md-4">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Completed On</div>
+                        <div style="font-weight:500;">{{ task.completed_at }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card">
+            <div class="card-header"><i class="bi bi-chat-dots me-2"></i>Comments ({{ comments|length }})</div>
+            <div class="card-body">
+                {% if comments %}
+                <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:20px;">
+                    {% for comment in comments %}
+                    <div style="display:flex;gap:12px;">
+                        <div class="user-avatar" style="width:32px;height:32px;font-size:13px;flex-shrink:0;background:#e0e7ff;color:#3730a3;">{{ comment.user_name[0]|upper }}</div>
+                        <div style="flex:1;background:#f8fafc;border-radius:10px;padding:12px 14px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                                <span style="font-weight:600;font-size:13px;">{{ comment.user_name }}</span>
+                                <span style="font-size:12px;color:#94a3b8;">{{ comment.created_at }}</span>
+                            </div>
+                            <p style="margin:0;font-size:13.5px;color:#374151;">{{ comment.comment }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if user.role in ['admin', 'manager'] or task.assigned_to == user.id %}
+                <form method="POST" action="{{ url_for('task.add_comment', task_id=task.id) }}">
+                    <label class="form-label" for="comment">Add Comment</label>
+                    <textarea class="form-control mb-3" id="comment" name="comment" rows="3" placeholder="Write a comment..." required></textarea>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-chat-plus me-2"></i>Post Comment</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Sidebar -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Status & Priority</div>
+            <div class="card-body">
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Current Status</div>
+                    {% if task.status == 'completed' %}<span class="badge badge-status-completed" style="font-size:13px;padding:6px 14px;">Completed</span>
+                    {% elif task.status == 'in_progress' %}<span class="badge badge-status-inprogress" style="font-size:13px;padding:6px 14px;">In Progress</span>
+                    {% elif task.status == 'cancelled' %}<span class="badge badge-freq-onetime" style="font-size:13px;padding:6px 14px;">Cancelled</span>
+                    {% else %}<span class="badge badge-status-pending" style="font-size:13px;padding:6px 14px;">Pending</span>{% endif %}
+                </div>
+                <div style="margin-bottom:20px;">
+                    <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Priority</div>
+                    {% if task.priority == 'urgent' %}<span class="badge" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:13px;padding:6px 14px;">🔴 Urgent</span>
+                    {% elif task.priority == 'high' %}<span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-size:13px;padding:6px 14px;">🟠 High</span>
+                    {% elif task.priority == 'medium' %}<span class="badge" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;font-size:13px;padding:6px 14px;">🟡 Medium</span>
+                    {% else %}<span class="badge" style="background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;font-size:13px;padding:6px 14px;">🟢 Low</span>{% endif %}
+                </div>
+
+                {% if user.role in ['admin', 'manager'] or task.assigned_to == user.id %}
+                <form method="POST" action="{{ url_for('task.change_status', task_id=task.id) }}">
+                    <label class="form-label" for="status">Update Status</label>
+                    <div style="display:flex;gap:8px;">
+                        <select class="form-select form-select-sm" id="status" name="status">
+                            <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if task.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if user.role in ['admin', 'manager'] %}
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person-check me-2"></i>Reassign Task</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('task.assign_task_route', task_id=task.id) }}">
+                    <div style="display:flex;gap:8px;">
+                        <select class="form-select form-select-sm" name="assigned_to">
+                            {% for u in users if u.is_active %}
+                            <option value="{{ u.id }}" {% if task.assigned_to == u.id %}selected{% endif %}>{{ u.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Assign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-clock-history me-2"></i>Record Info</div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+                <div>
+                    <div style="font-size:12px;color:#94a3b8;">Created By</div>
+                    <div style="font-size:13.5px;font-weight:500;">{{ task.created_by_name }}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:#94a3b8;">Created On</div>
+                    <div style="font-size:13.5px;">{{ task.created_at }}</div>
+                </div>
+                <div>
+                    <div style="font-size:12px;color:#94a3b8;">Last Updated</div>
+                    <div style="font-size:13.5px;">{{ task.updated_at }}</div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.role == 'admin' %}
+        <div class="card" style="border-color:#fecaca;">
+            <div class="card-header" style="background:#fef2f2;border-bottom-color:#fecaca;color:#991b1b;">
+                <i class="bi bi-exclamation-triangle me-2"></i>Danger Zone
+            </div>
+            <div class="card-body">
+                <p style="font-size:12.5px;color:#94a3b8;margin-bottom:12px;">Permanently deletes this task. Cannot be undone.</p>
+                <form method="POST" action="{{ url_for('task.delete_task_route', task_id=task.id) }}"
+                      onsubmit="return confirm('Delete this task permanently?');">
+                    <button type="submit" class="btn btn-sm btn-danger w-100">
+                        <i class="bi bi-trash me-2"></i>Delete Task
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

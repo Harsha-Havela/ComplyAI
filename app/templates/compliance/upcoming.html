@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Upcoming Compliance — ComplyAI{% endblock %}
+{% block page_title %}Upcoming Compliance{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1>Upcoming Compliance</h1>
+        <p>Compliance deadlines in the next {{ days_ahead }} days</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;gap:4px;">
+            <a href="{{ url_for('compliance.upcoming_compliance', days=7) }}"
+               class="btn btn-sm {% if days_ahead == 7 %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 Days</a>
+            <a href="{{ url_for('compliance.upcoming_compliance', days=30) }}"
+               class="btn btn-sm {% if days_ahead == 30 %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 Days</a>
+            <a href="{{ url_for('compliance.upcoming_compliance', days=90) }}"
+               class="btn btn-sm {% if days_ahead == 90 %}btn-primary{% else %}btn-outline-secondary{% endif %}">90 Days</a>
+        </div>
+        <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to All
+        </a>
+    </div>
+</div>
+
+{% if compliance_deadlines %}
+<div class="alert alert-info mb-4" style="border-left:4px solid #3b82f6;">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <strong>{{ compliance_deadlines|length }} upcoming deadline{% if compliance_deadlines|length != 1 %}s{% endif %} in the next {{ days_ahead }} days.</strong>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-clock me-2 text-warning"></i>Upcoming Deadlines — Next {{ days_ahead }} Days
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Compliance Type</th>
+                    <th>Client</th>
+                    <th>Due Date</th>
+                    <th>Frequency</th>
+                    <th>Urgency</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in compliance_deadlines %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ c.compliance_type }}</div>
+                        {% if c.description %}
+                        <div style="font-size:12px;color:#94a3b8;margin-top:2px;">{{ c.description[:55] }}{% if c.description|length > 55 %}…{% endif %}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ c.client_name or 'General' }}</td>
+                    <td style="font-weight:500;">{{ c.due_date }}</td>
+                    <td>
+                        {% if c.frequency == 'monthly' %}<span class="badge badge-freq-monthly">Monthly</span>
+                        {% elif c.frequency == 'quarterly' %}<span class="badge badge-freq-quarterly">Quarterly</span>
+                        {% elif c.frequency == 'yearly' %}<span class="badge badge-freq-yearly">Yearly</span>
+                        {% else %}<span class="badge badge-freq-onetime">One-time</span>{% endif %}
+                    </td>
+                    <td><span class="badge badge-status-pending">Upcoming</span></td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            <a href="{{ url_for('compliance.view_compliance', compliance_id=c.id) }}" class="action-btn view" title="View"><i class="bi bi-eye"></i></a>
+                            {% if user.role in ['admin', 'manager'] %}
+                            <a href="{{ url_for('compliance.edit_compliance', compliance_id=c.id) }}" class="action-btn edit" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <button class="action-btn" onclick="markCompleted('{{ c.id }}')" title="Mark Complete" style="border-color:#bbf7d0;color:#16a34a;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''"><i class="bi bi-check-lg"></i></button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="bi bi-calendar-check"></i>
+        <h5>No Upcoming Deadlines</h5>
+        <p>No compliance deadlines in the next {{ days_ahead }} days.</p>
+        <a href="{{ url_for('compliance.upcoming_compliance', days=90) }}" class="btn btn-outline-primary me-2">Check 90 Days</a>
+        <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-primary">View All</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% if user.role in ['admin', 'manager'] %}
+<script>
+function markCompleted(id) {
+    if (!confirm('Mark this item as completed?')) return;
+    fetch(`/compliance/${id}/change-status`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status: 'completed' })
+    }).then(r => r.json()).then(d => { if (d.success) location.reload(); else alert('Error: ' + (d.error || 'Unknown')); });
+}
+</script>
+{% endif %}
+{% endblock %}

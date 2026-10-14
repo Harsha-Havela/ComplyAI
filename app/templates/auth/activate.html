@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Activate Account — ComplyAI{% endblock %}
+
+{% block login_content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 24px;">
+    <div class="card border-0 shadow-lg" style="width: 100%; max-width: 460px; border-radius: 16px; overflow: hidden;">
+
+        <!-- Header -->
+        <div class="text-center p-4" style="background: linear-gradient(135deg, #1a56db 0%, #0f172a 100%);">
+            <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle mb-3" style="width:60px;height:60px;">
+                <i class="bi bi-shield-check" style="font-size:28px;color:#1a56db;"></i>
+            </div>
+            <h4 class="text-white fw-bold mb-1">ComplyAI</h4>
+            <p class="mb-0" style="color:#94a3b8;font-size:13px;">Activate Your Account</p>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body p-4">
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for cat, msg in messages %}
+                    <div class="alert alert-{{ cat }} mb-3" role="alert" style="border-radius:10px;font-size:14px;">
+                        <i class="bi bi-{% if cat == 'success' %}check-circle-fill{% else %}exclamation-triangle-fill{% endif %} me-2"></i>{{ msg }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Welcome Banner -->
+            <div class="mb-4 p-3 rounded" style="background:#eff6ff;border:1px solid #bfdbfe;">
+                <p class="mb-1" style="font-size:14px;font-weight:600;color:#1e40af;">
+                    Welcome, {{ user.full_name }}! 👋
+                </p>
+                <p class="mb-0" style="font-size:13px;color:#3b82f6;">
+                    Username: <strong>{{ user.username }}</strong>
+                </p>
+            </div>
+
+            <p style="font-size:14px;color:#64748b;margin-bottom:20px;">
+                Set a password to complete your account activation and start using ComplyAI.
+            </p>
+
+            <form method="POST" action="{{ url_for('auth.activate_account', token=token) }}">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="password" style="font-size:14px;">
+                        Create Password <span class="text-danger">*</span>
+                    </label>
+                    <div class="position-relative">
+                        <i class="bi bi-lock position-absolute text-muted" style="left:12px;top:50%;transform:translateY(-50%);font-size:15px;"></i>
+                        <input type="password" class="form-control" id="password" name="password"
+                               style="padding-left:38px;height:46px;border-radius:10px;border-color:#e2e8f0;font-size:14px;"
+                               placeholder="Minimum 8 characters" minlength="8" required>
+                    </div>
+                    <!-- Password strength bar -->
+                    <div class="mt-2">
+                        <div class="progress" style="height:5px;border-radius:4px;">
+                            <div id="strengthBar" class="progress-bar" style="width:0%;transition:width .3s;"></div>
+                        </div>
+                        <p id="strengthText" class="mb-0 mt-1" style="font-size:12px;color:#94a3b8;">Enter a password</p>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="confirm_password" style="font-size:14px;">
+                        Confirm Password <span class="text-danger">*</span>
+                    </label>
+                    <div class="position-relative">
+                        <i class="bi bi-lock-fill position-absolute text-muted" style="left:12px;top:50%;transform:translateY(-50%);font-size:15px;"></i>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                               style="padding-left:38px;height:46px;border-radius:10px;border-color:#e2e8f0;font-size:14px;"
+                               placeholder="Repeat your password" minlength="8" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn w-100 fw-semibold text-white border-0"
+                        style="height:48px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;font-size:15px;box-shadow:0 4px 12px rgba(16,185,129,.3);">
+                    <i class="bi bi-check-circle-fill me-2"></i>Activate My Account
+                </button>
+            </form>
+
+            <p class="text-center mt-3 mb-0" style="font-size:13px;color:#94a3b8;">
+                After activation, log in at
+                <a href="{{ url_for('auth.login') }}" style="color:#1a56db;text-decoration:none;">the login page</a>.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+const bar  = document.getElementById('strengthBar');
+const text = document.getElementById('strengthText');
+const confirmInput = document.getElementById('confirm_password');
+const passInput    = document.getElementById('password');
+
+passInput.addEventListener('input', function() {
+    const p = this.value;
+    let s = 0;
+    if (p.length >= 8)          s += 25;
+    if (/[a-z]/.test(p))        s += 25;
+    if (/[A-Z]/.test(p))        s += 25;
+    if (/[0-9]/.test(p))        s += 15;
+    if (/[$@#&!]/.test(p))      s += 10;
+
+    bar.style.width = s + '%';
+    if (!p) { bar.style.background=''; text.textContent='Enter a password'; text.style.color='#94a3b8'; }
+    else if (s < 50) { bar.style.background='#ef4444'; text.textContent='Weak — add uppercase, numbers or symbols'; text.style.color='#ef4444'; }
+    else if (s < 75) { bar.style.background='#f59e0b'; text.textContent='Medium — almost there'; text.style.color='#f59e0b'; }
+    else              { bar.style.background='#10b981'; text.textContent='Strong password ✅'; text.style.color='#10b981'; }
+});
+
+confirmInput.addEventListener('input', function() {
+    this.setCustomValidity(this.value !== passInput.value ? 'Passwords do not match' : '');
+});
+</script>
+{% endblock %}

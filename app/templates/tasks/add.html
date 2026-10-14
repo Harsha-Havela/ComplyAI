@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Create Task — ComplyAI{% endblock %}
+{% block page_title %}Create Task{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h1>Create New Task</h1><p>Fill in the details to create a task</p></div>
+    <a href="{{ url_for('task.list_tasks') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <form method="POST" action="{{ url_for('task.add_task') }}">
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-clipboard me-2 text-primary"></i>Task Information</div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="form-label" for="title">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" placeholder="Enter task title" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label" for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Optional: describe what needs to be done..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-people me-2 text-success"></i>Assignment</div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="client_id">Client <span class="text-danger">*</span></label>
+                            <select class="form-select" id="client_id" name="client_id" required>
+                                <option value="">Select client</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.company_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="assigned_to">Assign To <span class="text-danger">*</span></label>
+                            <select class="form-select" id="assigned_to" name="assigned_to" required>
+                                <option value="">Select user</option>
+                                {% for u in users %}
+                                <option value="{{ u.id }}">{{ u.full_name }} ({{ u.role|title }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header"><i class="bi bi-calendar-check me-2 text-warning"></i>Priority & Timeline</div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label" for="priority">Priority</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="low">🟢 Low</option>
+                                <option value="medium" selected>🟡 Medium</option>
+                                <option value="high">🟠 High</option>
+                                <option value="urgent">🔴 Urgent</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="due_date">Due Date</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="reminder_date">Reminder Date</label>
+                            <input type="date" class="form-control" id="reminder_date" name="reminder_date">
+                            <div style="font-size:11.5px;color:#94a3b8;margin-top:4px;">Must be before due date</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <a href="{{ url_for('task.list_tasks') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Create Task</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card" style="background:#fffbeb;border-color:#fde68a;">
+            <div class="card-body">
+                <h6 style="color:#92400e;margin-bottom:12px;"><i class="bi bi-lightbulb me-2"></i>Task Guidelines</h6>
+                <ul style="font-size:13px;color:#78350f;margin:0;padding-left:16px;line-height:1.8;">
+                    <li>Use a clear, specific task title</li>
+                    <li>Add description for complex tasks</li>
+                    <li>Set priority based on urgency</li>
+                    <li>Use realistic due dates</li>
+                    <li>Set reminders for timely follow-up</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('due_date').min = today;
+    document.getElementById('reminder_date').min = today;
+    const due = document.getElementById('due_date');
+    const rem = document.getElementById('reminder_date');
+    function validate() {
+        if (due.value && rem.value && rem.value > due.value) rem.setCustomValidity('Must be before due date');
+        else rem.setCustomValidity('');
+    }
+    due.addEventListener('change', validate);
+    rem.addEventListener('change', validate);
+});
+</script>
+{% endblock %}

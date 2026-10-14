@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Overdue Compliance — ComplyAI{% endblock %}
+{% block page_title %}Overdue Compliance{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1><i class="bi bi-exclamation-triangle text-danger me-2"></i>Overdue Compliance</h1>
+        <p>Compliance deadlines that have passed their due dates</p>
+    </div>
+    <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to All
+    </a>
+</div>
+
+{% if compliance_deadlines %}
+<div class="alert alert-danger mb-4" style="border-left:4px solid #ef4444;">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>{{ compliance_deadlines|length }} overdue item{% if compliance_deadlines|length != 1 %}s{% endif %} require immediate attention.</strong>
+</div>
+
+<div class="card">
+    <div class="card-header" style="background:#fef2f2;border-bottom-color:#fecaca;">
+        <span style="color:#991b1b;"><i class="bi bi-exclamation-triangle me-2"></i>Overdue Deadlines</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Compliance Type</th>
+                    <th>Client</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in compliance_deadlines %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ c.compliance_type }}</div>
+                        {% if c.description %}
+                        <div style="font-size:12px;color:#94a3b8;margin-top:2px;">{{ c.description[:55] }}{% if c.description|length > 55 %}…{% endif %}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ c.client_name or 'General' }}</td>
+                    <td>
+                        <span style="color:#ef4444;font-weight:600;">{{ c.due_date }}</span>
+                        <br><span style="font-size:11px;color:#ef4444;"><i class="bi bi-exclamation-circle me-1"></i>Overdue</span>
+                    </td>
+                    <td><span class="badge badge-status-overdue">Overdue</span></td>
+                    <td>
+                        <div style="display:flex;gap:4px;">
+                            <a href="{{ url_for('compliance.view_compliance', compliance_id=c.id) }}" class="action-btn view" title="View"><i class="bi bi-eye"></i></a>
+                            {% if user.role in ['admin', 'manager'] %}
+                            <a href="{{ url_for('compliance.edit_compliance', compliance_id=c.id) }}" class="action-btn edit" title="Edit"><i class="bi bi-pencil"></i></a>
+                            <button class="action-btn" onclick="markCompleted('{{ c.id }}')" title="Mark Complete" style="border-color:#bbf7d0;color:#16a34a;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''"><i class="bi bi-check-lg"></i></button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="bi bi-check-circle text-success"></i>
+        <h5>No Overdue Compliance</h5>
+        <p>All compliance deadlines are up to date.</p>
+        <a href="{{ url_for('compliance.list_compliance') }}" class="btn btn-primary">View All Compliance</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% if user.role in ['admin', 'manager'] %}
+<script>
+function markCompleted(id) {
+    if (!confirm('Mark this item as completed?')) return;
+    fetch(`/compliance/${id}/change-status`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status: 'completed' })
+    }).then(r => r.json()).then(d => { if (d.success) location.reload(); else alert('Error: ' + (d.error || 'Unknown')); });
+}
+</script>
+{% endif %}
+{% endblock %}

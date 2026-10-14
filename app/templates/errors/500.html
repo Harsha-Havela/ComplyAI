@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}500 Server Error — ComplyAI{% endblock %}
+{% block page_title %}Server Error{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:center;min-height:60vh;">
+    <div style="text-align:center;max-width:420px;">
+        <div style="font-size:80px;font-weight:800;color:#e2e8f0;line-height:1;margin-bottom:16px;">500</div>
+        <h3 style="font-size:20px;font-weight:700;margin-bottom:8px;">Something went wrong</h3>
+        <p style="color:#64748b;font-size:14px;margin-bottom:28px;">An unexpected error occurred on the server. Please try again or contact your administrator.</p>
+        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-primary"><i class="bi bi-house me-2"></i>Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

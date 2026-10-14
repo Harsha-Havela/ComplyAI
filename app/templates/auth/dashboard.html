@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ComplyAI{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Welcome Banner -->
+<div style="background:linear-gradient(135deg,#1a56db 0%,#1e40af 100%);border-radius:14px;padding:28px 32px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+    <div>
+        <h2 style="color:#fff;font-size:20px;font-weight:700;margin:0 0 6px;">
+            Good {{ "morning" if now.hour < 12 else "afternoon" if now.hour < 17 else "evening" }}, {{ user.full_name.split()[0] }} 👋
+        </h2>
+        <p style="color:#bfdbfe;font-size:13.5px;margin:0;">
+            <i class="bi bi-circle-fill me-1" style="font-size:8px;color:#34d399;"></i>
+            {{ user.role|title }} &nbsp;·&nbsp; {{ now.strftime('%A, %d %B %Y') }}
+        </p>
+    </div>
+    {% if user.role in ['admin', 'manager'] %}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="{{ url_for('client.add_client') }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);">
+            <i class="bi bi-plus-lg me-1"></i> Add Client
+        </a>
+        <a href="{{ url_for('task.add_task') }}" class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);">
+            <i class="bi bi-plus-lg me-1"></i> New Task
+        </a>
+        <a href="{{ url_for('compliance.add_compliance') }}" class="btn btn-sm" style="background:#fff;color:#1a56db;">
+            <i class="bi bi-shield-plus me-1"></i> Add Compliance
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-briefcase"></i></div>
+            <div>
+                <div class="stat-number">{{ client_stats.total }}</div>
+                <div class="stat-label">Total Clients</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check2-square"></i></div>
+            <div>
+                <div class="stat-number">{{ task_stats.total }}</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon yellow"><i class="bi bi-clock-history"></i></div>
+            <div>
+                <div class="stat-number">{{ task_stats.pending }}</div>
+                <div class="stat-label">Pending Tasks</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-calendar-x"></i></div>
+            <div>
+                <div class="stat-number">{{ upcoming_compliance_count }}</div>
+                <div class="stat-label">Upcoming Deadlines</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Body Grid -->
+<div class="row g-4">
+
+    <!-- Quick Actions -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-lightning-charge text-warning"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if user.role in ['admin', 'manager'] %}
+                    <a href="{{ url_for('client.add_client') }}" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-person-plus me-2"></i> Add New Client
+                    </a>
+                    <a href="{{ url_for('task.add_task') }}" class="btn btn-outline-success text-start">
+                        <i class="bi bi-plus-circle me-2"></i> Create Task
+                    </a>
+                    <a href="{{ url_for('compliance.add_compliance') }}" class="btn btn-outline-warning text-start">
+                        <i class="bi bi-shield-plus me-2"></i> Add Compliance Deadline
+                    </a>
+                    <a href="{{ url_for('report.reports_dashboard') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-download me-2"></i> Export Reports
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-person me-2"></i> My Profile
+                    </a>
+                    {% if user.role == 'admin' %}
+                    <a href="{{ url_for('auth.users') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-people me-2"></i> Manage Users
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Summary -->
+    {% if user.role in ['admin', 'manager'] %}
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-shield-check text-primary me-2"></i>Compliance Status</span>
+                <a href="{{ url_for('compliance.list_compliance') }}" style="font-size:12px;color:#1a56db;text-decoration:none;">View all →</a>
+            </div>
+            <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div>
+                            <span style="font-size:13.5px;">Completed</span>
+                        </div>
+                        <span style="font-weight:600;color:#10b981;">{{ compliance_stats.completed if compliance_stats else 0 }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div>
+                            <span style="font-size:13.5px;">Pending</span>
+                        </div>
+                        <span style="font-weight:600;color:#f59e0b;">{{ compliance_stats.pending if compliance_stats else 0 }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fef2f2;border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
+                            <span style="font-size:13.5px;">Overdue</span>
+                        </div>
+                        <span style="font-weight:600;color:#ef4444;">{{ compliance_stats.overdue if compliance_stats else 0 }}</span>
+                    </div>
+                </div>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f1f5f9;display:flex;gap:8px;">
+                    <a href="{{ url_for('compliance.overdue_compliance') }}" class="btn btn-sm btn-outline-danger flex-fill">Overdue</a>
+                    <a href="{{ url_for('compliance.upcoming_compliance') }}" class="btn btn-sm btn-outline-warning flex-fill">Upcoming</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Task Overview -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-check2-square text-success me-2"></i>Task Overview</span>
+                <a href="{{ url_for('task.list_tasks') if user.role in ['admin','manager'] else url_for('task.my_tasks') }}" style="font-size:12px;color:#1a56db;text-decoration:none;">View all →</a>
+            </div>
+            <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:#10b981;"></div>
+                            <span style="font-size:13.5px;">Completed</span>
+                        </div>
+                        <span style="font-weight:600;color:#10b981;">{{ task_stats.completed }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;"></div>
+                            <span style="font-size:13.5px;">In Progress</span>
+                        </div>
+                        <span style="font-weight:600;color:#3b82f6;">{{ task_stats.in_progress }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#f8fafc;border-radius:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div>
+                            <span style="font-size:13.5px;">Pending</span>
+                        </div>
+                        <span style="font-weight:600;color:#f59e0b;">{{ task_stats.pending }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.role == 'admin' %}
+<!-- System Info -->
+<div class="row g-4 mt-0">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-cpu me-2 text-secondary"></i>System Information</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p style="font-size:13.5px;margin-bottom:6px;"><span style="color:#64748b;">Application:</span> <strong>ComplyAI v1.0.0</strong></p>
+                        <p style="font-size:13.5px;margin-bottom:0;"><span style="color:#64748b;">Environment:</span> <strong>Production</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p style="font-size:13.5px;margin-bottom:6px;"><span style="color:#64748b;">Database:</span> <strong>Firebase Firestore</strong></p>
+                        <p style="font-size:13.5px;margin-bottom:0;"><span style="color:#64748b;">Session:</span> <strong>Active</strong></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p style="font-size:13.5px;margin-bottom:6px;"><span style="color:#64748b;">IP Address:</span> <strong>{{ request.remote_addr }}</strong></p>
+                        <p style="font-size:13.5px;margin-bottom:0;"><span style="color:#64748b;">Session Type:</span> <strong>{{ 'Remembered' if session.get('_permanent') else 'Session Only' }}</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Pass now to template context
+</script>
+{% endblock %}

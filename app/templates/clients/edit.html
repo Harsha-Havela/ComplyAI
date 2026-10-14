@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Edit Client — ComplyAI{% endblock %}
+{% block page_title %}Edit Client{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h1>Edit Client</h1><p>{{ client.company_name }}</p></div>
+    <a href="{{ url_for('client.view_client', client_id=client.id) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('client.edit_client', client_id=client.id) }}">
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-building me-2 text-primary"></i>Company Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <label class="form-label" for="company_name">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" class="fme" name="company_name" value="{{ client.company_name }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="business_type">Business Type</label>
+                        <select class="form-select" id="business_type" name="business_type">
+                            <option value="">Select type</option>
+                            {% forr'] %}
+                            <option value="{{ t }}" {% if client.business_type == t %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>Tax Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">PAN</label>
+                        <input type="text" class="form-control" value="{{ client.pan }}" disabled style="background:#f8fafc;">
+                        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">PAN cannot be modified</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="gstin">GSTIN</label>
+                        <input type="text" class="form-control text-uppercase" id="gstin" name="gstin"
+                               value="{{ client.gstin or '' }}" maxlength="15">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-envelope me-2 text-info"></i>Contact Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="email">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ client.email }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="phone">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ client.phone or '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-geo-alt me-2 text-success"></i>Address</div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label" for="address">Street Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2">{{ client.address or '' }}</textarea>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label" for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city" value="{{ client.city or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="state">State</label>
+                        <input type="text" class="form-contr
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="pincode">Pincode</label>
+                        <input type="text" class="form-control" id="pincode" name="pincode" value="{{ client.pincode or '' }}" maxlength="6">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-personv>
+            <div class="card-body">
+                <label class="form-label" for="assigned_to">Assign To</label>
+                <select class="form-select" id="assigned_to" name="assigned_to">
+                    <option value="">Unassigned</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if client.assigned_to == u.id %}selected{% endif %}>{{ u.full_name }} ({{ u.role|title }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <a href="{{ url_for('client.view_client', client_id=client.id) }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Changes</button>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card" style="background:#fffbeb;border-color:#fde68a;">
+            <div class="card-body">
+                <h6 style="color:#92400e;margin-bottom:10px;"><i class="bi bi-pencil me-2"></i>Editing</h6>
+                <p style="font-size:13px;color:#78350f;margin:0;">PAN is locked and cannot be changed. All other fields are editable.</p>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('gstin').addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+</script>
+{% endblock %}
+
+<form method="POST" action="{{ url_for('client.edit_client', client_id=client.id) }}">
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-building me-2 text-primary"></i>Company Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <label class="form-label" for="company_name">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" value="{{ client.company_name }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="business_type">Business Type</label>
+                        <select class="form-select" id="business_type" name="business_type">
+                            <option value="">Select type</option>
+                            {% for t in ['Sole Proprietorship','Partnership','Private Limited','Public Limited','LLP','Other'] %}
+                            <option value="{{ t }}" {% if client.business_type == t %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>Tax Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">PAN</label>
+                        <input type="text" class="form-control" value="{{ client.pan }}" disabled style="background:#f8fafc;">
+                        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">PAN cannot be modified</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="gstin">GSTIN</label>
+                        <input type="text" class="form-control text-uppercase" id="gstin" name="gstin" value="{{ client.gstin or '' }}" maxlength="15">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-envelope me-2 text-info"></i>Contact Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="email">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ client.email }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="phone">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ client.phone or '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-geo-alt me-2 text-success"></i>Address</div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label" for="address">Street Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2">{{ client.address or '' }}</textarea>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label" for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city" value="{{ client.city or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="state">State</label>
+                        <input type="text" class="form-control" id="state" name="state" value="{{ client.state or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="pincode">Pincode</label>
+                        <input type="text" class="form-control" id="pincode" name="pincode" value="{{ client.pincode or '' }}" maxlength="6">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person-check me-2 text-secondary"></i>Assignment</div>
+            <div class="card-body">
+                <label class="form-label" for="assigned_to">Assign To</label>
+                <select class="form-select" id="assigned_to" name="assigned_to">
+                    <option value="">Unassigned</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if client.assigned_to == u.id %}selected{% endif %}>{{ u.full_name }} ({{ u.role|title }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <a href="{{ url_for('client.view_client', client_id=client.id) }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Save Changes</button>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card" style="background:#fffbeb;border-color:#fde68a;">
+            <div class="card-body">
+                <h6 style="color:#92400e;margin-bottom:10px;"><i class="bi bi-info-circle me-2"></i>Note</h6>
+                <p style="font-size:13px;color:#78350f;margin:0;">PAN is locked and cannot be changed after registration.</p>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('gstin').addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+</script>
+{% endblock %}

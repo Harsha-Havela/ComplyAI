@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}My Tasks — ComplyAI{% endblock %}
+{% block page_title %}My Tasks{% endblock %}
+
+{% block content %}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1>My Tasks</h1>
+        <p>Tasks assigned to you</p>
+    </div>
+    <a href="{{ url_for('task.list_tasks') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-list-task me-2"></i>All Tasks
+    </a>
+</div>
+
+{% if stats.overdue > 0 %}
+<div class="alert alert-danger mb-4" style="border-left:4px solid #ef4444;">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    You have <strong>{{ stats.overdue }} overdue task{% if stats.overdue != 1 %}s{% endif %}</strong>.
+    <a href="{{ url_for('task.overdue_tasks') }}" style="color:#991b1b;font-weight:600;">View overdue tasks →</a>
+</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-check2-square"></i></div>
+            <div><div class="stat-number">{{ stats.total }}</div><div class="stat-label">Total Assigned</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon yellow"><i class="bi bi-hourglass-split"></i></div>
+            <div><div class="stat-number">{{ stats.pending }}</div><div class="stat-label">Pending</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon indigo"><i class="bi bi-arrow-repeat"></i></div>
+            <div><div class="stat-number">{{ stats.in_progress }}</div><div class="stat-label">In Progress</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+            <div><div class="stat-number">{{ stats.completed }}</div><div class="stat-label">Completed</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><i class="bi bi-person-workspace me-2"></i>Assigned Tasks</div>
+    {% if tasks %}
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Client</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600;">{{ task.title }}</div>
+                        {% if task.description %}
+                        <div style="font-size:12px;color:#94a3b8;margin-top:2px;">{{ task.description[:50] }}{% if task.description|length > 50 %}…{% endif %}</div>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:13.5px;">{{ task.client_name or '—' }}</td>
+                    <td>
+                        {% if task.priority == 'urgent' %}<span class="badge" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;">🔴 Urgent</span>
+                        {% elif task.priority == 'high' %}<span class="badge" style="background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;">🟠 High</span>
+                        {% elif task.priority == 'medium' %}<span class="badge" style="background:#fffbeb;color:#92400e;border:1px solid #fde68a;">🟡 Medium</span>
+                        {% else %}<span class="badge" style="background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;">🟢 Low</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if task.status == 'completed' %}<span class="badge badge-status-completed">Completed</span>
+                        {% elif task.status == 'in_progress' %}<span class="badge badge-status-inprogress">In Progress</span>
+                        {% elif task.status == 'cancelled' %}<span class="badge badge-freq-onetime">Cancelled</span>
+                        {% else %}<span class="badge badge-status-pending">Pending</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if task.due_date %}
+                        <div style="font-size:13.5px;">{{ task.due_date }}</div>
+                        {% if task.due_date|is_overdue(task.status) %}
+                        <div style="font-size:11px;color:#ef4444;"><i class="bi bi-exclamation-circle me-1"></i>Overdue</div>
+                        {% endif %}
+                        {% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:4px;align-items:center;">
+                            <a href="{{ url_for('task.view_task', task_id=task.id) }}" class="action-btn view" title="View"><i class="bi bi-eye"></i></a>
+                            {% if task.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('task.change_status', task_id=task.id) }}" style="display:inline;" onsubmit="return confirm('Start working on this task?')">
+                                <input type="hidden" name="status" value="in_progress">
+                                <button type="submit" class="action-btn" title="Start Task" style="border-color:#bae6fd;color:#0369a1;" onmouseover="this.style.background='#f0f9ff'" onmouseout="this.style.background=''"><i class="bi bi-play-fill"></i></button>
+                            </form>
+                            {% elif task.status == 'in_progress' %}
+                            <form method="POST" action="{{ url_for('task.change_status', task_id=task.id) }}" style="display:inline;" onsubmit="return confirm('Mark this task as completed?')">
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" class="action-btn" title="Complete Task" style="border-color:#bbf7d0;color:#16a34a;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background=''"><i class="bi bi-check-lg"></i></button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <h5>No tasks assigned to you</h5>
+        <p>Your manager will assign tasks to you. Check back later.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

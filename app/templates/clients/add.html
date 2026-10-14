@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Add Client — ComplyAI{% endblock %}
+{% block page_title %}Add New Client{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h1>Add New Client</h1><p>Register a new client in the system</p></div>
+    <a href="{{ url_for('client.list_clients') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back to Clients</a>
+</div>
+
+<form method="POST" action="{{ url_for('client.add_client') }}">
+<div class="row g-4">
+    <div class="col-md-8">
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-building me-2 text-primary"></i>Company Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <label class="form-label" for="company_name">Company Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" placeholder="Enter company name" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="business_type">Business Type</label>
+                        <select class="form-select" id="business_type" name="business_type">
+                            <option value="">Select type</option>
+                            <option>Sole Proprietorship</option>
+                            <option>Partnership</option>
+                            <option>Private Limited</option>
+                            <option>Public Limited</option>
+                            <option>LLP</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>Tax Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="pan">PAN <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase" id="pan" name="pan"
+                               placeholder="AAAAA9999A" pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]" maxlength="10" required>
+                        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Format: AAAAA9999A</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="gstin">GSTIN</label>
+                        <input type="text" class="form-control text-uppercase" id="gstin" name="gstin"
+                               placeholder="99AAAAA9999A9Z9" maxlength="15">
+                        <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Optional — 15 character GST number</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-envelope me-2 text-info"></i>Contact Information</div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label" for="email">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="company@example.com" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="phone">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 9876543210">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-geo-alt me-2 text-success"></i>Address</div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label" for="address">Street Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2" placeholder="Street address"></textarea>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label" for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="state">State</label>
+                        <input type="text" class="form-control" id="state" name="state">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="pincode">Pincode</label>
+                        <input type="text" class="form-control" id="pincode" name="pincode" pattern="[0-9]{6}" maxlength="6">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><i class="bi bi-person-check me-2 text-secondary"></i>Assignment</div>
+            <div class="card-body">
+                <label class="form-label" for="assigned_to">Assign To</label>
+                <select class="form-select" id="assigned_to" name="assigned_to">
+                    <option value="">Unassigned</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}">{{ u.full_name }} ({{ u.role|title }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <a href="{{ url_for('client.list_clients') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-2"></i>Add Client</button>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card" style="background:#eff6ff;border-color:#bfdbfe;">
+            <div class="card-body">
+                <h6 style="color:#1e40af;margin-bottom:10px;"><i class="bi bi-info-circle me-2"></i>Required Fields</h6>
+                <ul style="font-size:13px;color:#1d4ed8;margin:0;padding-left:16px;line-height:1.9;">
+                    <li><strong>Company Name</strong> — Legal name</li>
+                    <li><strong>PAN</strong> — 10-character PAN</li>
+                    <li><strong>Email</strong> — Primary contact email</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('pan').addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+document.getElementById('gstin').addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+</script>
+{% endblock %}

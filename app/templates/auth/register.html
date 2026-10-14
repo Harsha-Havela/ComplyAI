@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Register User — ComplyAI{% endblock %}
+{% block page_title %}Register New User{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div><h1>Register New User</h1><p>Create a team member account</p></div>
+    <a href="{{ url_for('auth.users') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Back to Users</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-person-plus me-2 text-primary"></i>Account Information</div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4" style="font-size:13px;">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    An activation email will be sent to the user. They will set their own password via the activation link.
+                </div>
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="username">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username"
+                                   placeholder="e.g. john_doe" pattern="[a-zA-Z][a-zA-Z0-9_]*" minlength="3" maxlength="50" required>
+                            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">3–50 chars, start with a letter</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="email">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="user@company.com" required>
+                            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Activation email sent here</div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label" for="full_name">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" placeholder="John Doe" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="role">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="employee" selected>Employee</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="phone">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+91 9876543210">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:28px;">
+                        <a href="{{ url_for('auth.users') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Register User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4" style="background:#f0fdf4;border-color:#bbf7d0;">
+            <div class="card-body">
+                <h6 style="color:#14532d;margin-bottom:12px;"><i class="bi bi-send me-2"></i>Activation Flow</h6>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    {% for step, label in [('1','Create user account'),('2','Activation email sent'),('3','User clicks link'),('4','User sets password'),('5','User can log in')] %}
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="width:24px;height:24px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">{{ step }}</div>
+                        <span style="font-size:13px;color:#166534;">{{ label }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="card" style="background:#eff6ff;border-color:#bfdbfe;">
+            <div class="card-body">
+                <h6 style="color:#1e40af;margin-bottom:12px;"><i class="bi bi-shield-lock me-2"></i>Role Permissions</h6>
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#1d4ed8;">
+                    <div><strong>Employee</strong> — View assigned tasks only</div>
+                    <div><strong>Manager</strong> — Manage clients, tasks, compliance</div>
+                    <div><strong>Admin</strong> — Full access including users</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
